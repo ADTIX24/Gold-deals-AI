@@ -1,0 +1,103 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email == 'veira1x1@gmail.com' && request.auth.token.email_verified == true) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true)
+      );
+    }
+
+    // --- Validation Blueprints ---
+    function isValidUser(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.email is string && data.email.size() <= 150 &&
+             data.credits is number && data.credits >= 0 &&
+             (data.get('unlockedSignals', []) is list);
+    }
+
+    function isValidConfig(data) {
+      return true; // Allow admin to set any config structure as long as they are authenticated as admin
+    }
+
+    function isValidSignal(data) {
+      return data.pair is string && data.pair.size() <= 20 &&
+             data.type in ['buy', 'sell'] &&
+             data.category in ['scalping', 'swing'] &&
+             data.entry is number &&
+             data.tp is number &&
+             data.sl is number &&
+             (data.get('notes', '') is string && data.get('notes', '').size() <= 1000) &&
+             (data.get('status', 'active') in ['active', 'closed']) &&
+             data.createdAt is timestamp;
+    }
+
+    // --- Collection Routes ---
+    
+    match /users/{userId} {
+      // Allow user to get their own profile, or admin to get any profile
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      
+      allow create: if isSignedIn() && request.auth.uid == userId && 
+        isValidUser(request.resource.data) &&
+        request.resource.data.credits == 0 &&
+        (request.resource.data.isAdmin == false || request.auth.token.email == 'veira1x1@gmail.com');
+      
+      allow update: if isSignedIn() && (
+        isAdmin() || (
+          request.auth.uid == userId && (
+            // Case 1: Simple profile update (name only)
+            (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name'])) ||
+            // Case 2: Signal unlock action (decrements credits by 1 and adds one signal)
+            (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['credits', 'unlockedSignals']) &&
+             request.resource.data.credits == resource.data.credits - 1 &&
+             request.resource.data.unlockedSignals.size() == (resource.data.get('unlockedSignals', []).size() + 1))
+          )
+        )
+      ) && isValidUser(request.resource.data);
+
+      match /ai_history/{historyId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && 
+          request.resource.data.userId == request.auth.uid &&
+          request.resource.data.timestamp == request.time;
+      }
+    }
+
+    match /settings/general {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidConfig(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /signals/{signalId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidId(signalId) && 
+        request.resource.data.keys().hasAll(['pair', 'type', 'category', 'entry', 'tp', 'sl', 'createdAt']) &&
+        isValidSignal(request.resource.data) &&
+        request.resource.data.createdAt == request.time;
+      allow update: if isAdmin() && isValidSignal(request.resource.data);
+      allow delete: if isAdmin();
+    }
+  }
+}

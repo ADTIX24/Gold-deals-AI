@@ -24,13 +24,19 @@
         "snapchatUrl": { "type": "string" },
         "tiktokUrl": { "type": "string" },
         "youtubeUrl": { "type": "string" },
+<<<<<<< HEAD
         "whatsappUrl": { "type": "string" },
         "facebookUrl": { "type": "string" },
+=======
+>>>>>>> c39d14cb466fae8884ead36e6c65983b9c95b370
         "supportUrl": { "type": "string", "description": "Technical support link (usually Telegram)" },
         "supportMessage": { "type": "string", "description": "Support information text shown in the wallet view" },
         "supportUrl2": { "type": "string" },
         "showSupport2": { "type": "boolean" },
+<<<<<<< HEAD
         "marketSentiment": { "type": "string", "enum": ["safe", "tense", "dangerous"], "description": "Current market sentiment state" },
+=======
+>>>>>>> c39d14cb466fae8884ead36e6c65983b9c95b370
         "announcement": { "type": "string" },
         "footerCopyright": { "type": "string" },
         "marketStatus": { "type": "string", "enum": ["active", "closed"], "description": "Global market status text" },

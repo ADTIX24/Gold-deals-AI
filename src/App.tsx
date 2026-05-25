@@ -1345,18 +1345,18 @@ const AIAnalyst = ({ userProfile, isRtl }: any) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-6 py-8 border-y border-white/5">
+              <div className="grid grid-cols-3 gap-1 sm:gap-6 py-6 border-y border-white/5 text-center">
                 <div className="space-y-2">
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{isRtl ? 'الدخول' : 'Entry'}</p>
-                  <p className="text-2xl font-mono font-black text-white">{signal.entry}</p>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest text-center">{isRtl ? 'الدخول' : 'Entry'}</p>
+                  <p className="text-sm min-[390px]:text-base sm:text-xl md:text-2xl font-mono font-black text-white text-center">{signal.entry}</p>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 border-x border-white/10">
                   <p className="text-[10px] text-slate-500 font-bold uppercase text-center tracking-widest">{isRtl ? 'الهدف' : 'TP'}</p>
-                  <p className="text-2xl font-mono font-black text-green-400 text-center">{signal.tp}</p>
+                  <p className="text-sm min-[390px]:text-base sm:text-xl md:text-2xl font-mono font-black text-green-400 text-center">{signal.tp}</p>
                 </div>
-                <div className="space-y-2 text-right">
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{isRtl ? 'الخسارة' : 'SL'}</p>
-                  <p className="text-2xl font-mono font-black text-red-500">{signal.sl}</p>
+                <div className="space-y-2">
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest text-center">{isRtl ? 'الخسارة' : 'SL'}</p>
+                  <p className="text-sm min-[390px]:text-base sm:text-xl md:text-2xl font-mono font-black text-red-500 text-center">{signal.sl}</p>
                 </div>
               </div>
 

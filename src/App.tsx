@@ -1197,18 +1197,22 @@ const AIAnalyst = ({ userProfile, isRtl }: any) => {
       const currentPrice = await fetchGoldPrice();
       const newSignal = await generateAISignal(isRtl, currentPrice);
       
-      // Save to history
-      const historyRef = collection(db, 'users', userProfile.uid, 'ai_history');
-      await addDoc(historyRef, {
-        ...newSignal,
-        userId: userProfile.uid,
-        timestamp: serverTimestamp()
-      });
+      try {
+        // Save to history
+        const historyRef = collection(db, 'users', userProfile.uid, 'ai_history');
+        await addDoc(historyRef, {
+          ...newSignal,
+          userId: userProfile.uid,
+          timestamp: serverTimestamp()
+        });
 
-      // Deduct 1 credit for EVERYONE (including admin) as requested
-      await updateDoc(doc(db, 'users', userProfile.uid), {
-        credits: increment(-1)
-      });
+        // Deduct 1 credit for EVERYONE (including admin) as requested
+        await updateDoc(doc(db, 'users', userProfile.uid), {
+          credits: increment(-1)
+        });
+      } catch (dbErr) {
+        console.error("Firestore persistence or credit deduction failed:", dbErr);
+      }
       
       // Save last generate timestamp for this user in localStorage to persist timer
       localStorage.setItem(`ai_cooldown_timestamp_${userProfile.uid}`, Date.now().toString());

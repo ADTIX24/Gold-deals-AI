@@ -71,7 +71,10 @@ service cloud.firestore {
             // Case 2: Signal unlock action (decrements credits by 1 and adds one signal)
             (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['credits', 'unlockedSignals']) &&
              request.resource.data.credits == resource.data.credits - 1 &&
-             request.resource.data.unlockedSignals.size() == (resource.data.get('unlockedSignals', []).size() + 1))
+             request.resource.data.unlockedSignals.size() == (resource.data.get('unlockedSignals', []).size() + 1)) ||
+            // Case 3: AI signal generation action (decrements credits by 1)
+            (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['credits']) &&
+             request.resource.data.credits == resource.data.credits - 1)
           )
         )
       ) && isValidUser(request.resource.data);

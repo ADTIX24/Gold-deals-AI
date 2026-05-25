@@ -1,6 +1,17 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiClient: GoogleGenAI | null = null;
+
+const getGeminiClient = (): GoogleGenAI => {
+  if (!aiClient) {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) {
+      throw new Error("GEMINI_API_KEY is not defined. Please check your workspace environment variables.");
+    }
+    aiClient = new GoogleGenAI({ apiKey: key });
+  }
+  return aiClient;
+};
 
 export interface AISignal {
   pair: string;
@@ -48,6 +59,7 @@ export const generateAISignal = async (isRtl: boolean, currentPrice: number): Pr
     Translate analysis to ${isRtl ? 'Arabic' : 'English'}.
   `;
 
+  const ai = getGeminiClient();
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: prompt,

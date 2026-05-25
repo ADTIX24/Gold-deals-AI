@@ -1867,51 +1867,91 @@ export default function App() {
 
       {/* Mobile Bottom Navigation */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 h-20 bg-slate-950/90 backdrop-blur-2xl border-t border-white/10 z-50 flex items-center justify-around px-2 pb-safe">
-        <MobileNavItem 
-          icon={<Wallet size={20} />} 
-          label={isRtl ? 'المحفظة' : 'Wallet'} 
-          active={currentView === 'wallet'} 
-          onClick={() => userProfile ? setCurrentView('wallet') : handleLogin()} 
-        />
+        {isRtl ? (
+          <>
+            <MobileNavItem 
+              icon={<BrainCircuit size={20} />} 
+              label="المحلل"
+              active={currentView === 'ai-analyst'} 
+              onClick={() => setCurrentView('ai-analyst')} 
+            />
 
-        <MobileNavItem 
-          icon={<BrainCircuit size={20} />} 
-          label={isRtl ? 'المحلل' : 'AI Analysis'} 
-          active={currentView === 'ai-analyst'} 
-          onClick={() => setCurrentView('ai-analyst')} 
-        />
-        
-        <div className="relative -top-3">
-          <button 
-            onClick={() => setCurrentView('dashboard')}
-            className={cn(
-              "w-16 h-16 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(251,191,36,0.2)] transition-all border-4 border-[#050505] active:scale-95",
-              currentView === 'dashboard' ? "bg-amber-400 text-slate-950 scale-110" : "bg-white/5 text-slate-400 backdrop-blur-xl"
-            )}
-          >
-            <LayoutDashboard size={28} />
-          </button>
-          <div className={cn(
-            "text-[9px] font-black text-center mt-1.5 uppercase tracking-widest transition-colors",
-            currentView === 'dashboard' ? "text-amber-400" : "text-slate-500"
-          )}>
-            {isRtl ? 'الرئيسية' : 'Home'}
+            <div className="relative -top-3">
+              <button 
+                onClick={() => setCurrentView('dashboard')}
+                className={cn(
+                  "w-16 h-16 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(251,191,36,0.2)] transition-all border-4 border-[#050505] active:scale-95",
+                  currentView === 'dashboard' ? "bg-amber-400 text-slate-950 scale-110" : "bg-white/5 text-slate-400 backdrop-blur-xl"
+                )}
+              >
+                <LayoutDashboard size={28} />
+              </button>
+              <div className={cn(
+                "text-[9px] font-black text-center mt-1.5 uppercase tracking-widest transition-colors",
+                currentView === 'dashboard' ? "text-amber-400" : "text-slate-500"
+              )}>
+                الرئيسية
+              </div>
+            </div>
+
+            <MobileNavItem 
+              icon={<Wallet size={20} />} 
+              label="المحفظة"
+              active={currentView === 'wallet'} 
+              onClick={() => userProfile ? setCurrentView('wallet') : handleLogin()} 
+            />
+          </>
+        ) : (
+          <>
+            <MobileNavItem 
+              icon={<Wallet size={20} />} 
+              label="Wallet"
+              active={currentView === 'wallet'} 
+              onClick={() => userProfile ? setCurrentView('wallet') : handleLogin()} 
+            />
+
+            <div className="relative -top-3">
+              <button 
+                onClick={() => setCurrentView('dashboard')}
+                className={cn(
+                  "w-16 h-16 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(251,191,36,0.2)] transition-all border-4 border-[#050505] active:scale-95",
+                  currentView === 'dashboard' ? "bg-amber-400 text-slate-950 scale-110" : "bg-white/5 text-slate-400 backdrop-blur-xl"
+                )}
+              >
+                <LayoutDashboard size={28} />
+              </button>
+              <div className={cn(
+                "text-[9px] font-black text-center mt-1.5 uppercase tracking-widest transition-colors",
+                currentView === 'dashboard' ? "text-amber-400" : "text-slate-500"
+              )}>
+                Home
+              </div>
+            </div>
+
+            <MobileNavItem 
+              icon={<BrainCircuit size={20} />} 
+              label="AI Analysis"
+              active={currentView === 'ai-analyst'} 
+              onClick={() => setCurrentView('ai-analyst')} 
+            />
+          </>
+        )}
+
+        {/* Floating Admin Control Panel button, visible ONLY to authenticated admin accounts */}
+        {userProfile?.isAdmin && (
+          <div className="absolute -top-3 right-4 rtl:right-auto rtl:left-4 z-50 animate-in fade-in zoom-in-50 duration-300">
+            <button 
+              onClick={() => setCurrentView('admin')}
+              className={cn(
+                "h-8 px-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-amber-500/30 text-amber-400 hover:text-amber-300 transition-all active:scale-95 flex items-center gap-1.5 shadow-lg shadow-amber-500/10 backdrop-blur-md",
+                currentView === 'admin' && "bg-amber-400 text-slate-950 border-transparent shadow-amber-500/20"
+              )}
+            >
+              <Shield size={13} className={cn("animate-pulse", currentView === 'admin' ? "text-slate-950" : "text-amber-400")} />
+              <span className="text-[10px] font-black uppercase tracking-wider">{isRtl ? 'لوحة التحكم' : 'Admin'}</span>
+            </button>
           </div>
-        </div>
-
-        <MobileNavItem 
-          icon={userProfile?.isAdmin ? <Shield size={20} className="text-amber-400" /> : <Shield size={20} />} 
-          label={userProfile?.isAdmin ? "" : (isRtl ? 'الرصيد' : 'Credits')} 
-          active={currentView === 'admin'} 
-          onClick={() => userProfile?.isAdmin ? setCurrentView('admin') : setCurrentView('wallet')} 
-        />
-
-        <MobileNavItem 
-          icon={<User size={20} />} 
-          label={isRtl ? 'حسابي' : 'Account'} 
-          active={currentView === 'profile'} 
-          onClick={() => userProfile ? setCurrentView('profile') : handleLogin()} 
-        />
+        )}
       </div>
 
       {/* Footer */}

@@ -20,7 +20,7 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import { 
-  onAuthStateChanged, signInWithPopup, 
+  onAuthStateChanged, signInWithPopup, signInWithRedirect,
   GoogleAuthProvider, signOut
 } from 'firebase/auth';
 import { db, auth } from './lib/firebase';
@@ -128,6 +128,7 @@ const SignalCard = ({ signal, userProfile, isLocked, onUnlock }: any) => {
   const { t, i18n } = useTranslation();
   const isRtl = i18n.language === 'ar';
   const isSwing = signal.category === 'swing';
+  const isBuy = signal.type ? (signal.type.toLowerCase() === 'buy') : !isSwing;
   const timestamp = signal.createdAt?.toDate ? signal.createdAt.toDate() : new Date();
 
   return (
@@ -153,12 +154,17 @@ const SignalCard = ({ signal, userProfile, isLocked, onUnlock }: any) => {
       <div className="flex items-center space-x-3 mb-4 rtl:space-x-reverse">
         <div className={cn(
           "w-8 h-8 rounded-full flex items-center justify-center text-slate-900",
-          isSwing ? "bg-amber-400 shadow-lg shadow-amber-400/20" : "bg-cyan-400 shadow-lg shadow-cyan-400/20"
+          isBuy ? "bg-green-400 shadow-lg shadow-green-400/20" : "bg-red-400 shadow-lg shadow-red-400/20"
         )}>
-          {isSwing ? <TrendingDown size={16} /> : <TrendingUp size={16} />}
+          {isBuy ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
         </div>
         <div>
-          <div className="text-sm font-bold text-white tracking-widest">{signal.pair} {isSwing ? 'SELL' : 'BUY'}</div>
+          <div className="text-sm font-bold text-white tracking-widest">
+            {signal.pair}{' '}
+            <span className={isBuy ? "text-green-400" : "text-red-400"}>
+              {isBuy ? 'BUY' : 'SELL'}
+            </span>
+          </div>
           <div className="text-[9px] text-slate-400 uppercase font-mono">{isSwing ? 'H4' : 'M5'} Timeframe</div>
         </div>
       </div>
@@ -176,7 +182,7 @@ const SignalCard = ({ signal, userProfile, isLocked, onUnlock }: any) => {
           <div className="text-[9px] text-slate-500 uppercase font-bold">Take Profit</div>
           <div className={cn(
             "text-base md:text-xl font-mono font-bold",
-            isSwing ? "text-amber-400" : "text-green-400"
+            isBuy ? "text-green-400" : "text-amber-400"
           )}>
             {(signal.tp || 0).toLocaleString()}
           </div>
@@ -1130,9 +1136,12 @@ const AIAnalyst = ({ userProfile, isRtl }: any) => {
       setSignal(newSignal);
       setCooldownTime(0);
       setIsCooldownActive(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError(isRtl ? 'حدث خطأ أثناء التحليل. حاول مرة أخرى.' : 'Error during analysis. Please try again.');
+      const errMsg = err?.message || err?.toString() || '';
+      setError(isRtl 
+        ? `حدث خطأ أثناء التحليل: ${errMsg}. يرجى التأكد من إضافة مفتاح (GEMINI_API_KEY) في إعدادات المنصة (Vercel).`
+        : `Error during analysis: ${errMsg}. Please make sure GEMINI_API_KEY is defined in your platform environment variables.`);
     } finally {
       setLoading(false);
     }
@@ -1489,17 +1498,36 @@ export default function App() {
     try {
       await signInWithPopup(auth, provider);
     } catch (error: any) {
+      console.warn("Popup Sign-in failed or blocked, attempting redirect fallback. Code:", error?.code, "Message:", error?.message);
+      
+      // If popup was cancelled or popup request was cancelled
       if (error && error.code === 'auth/cancelled-popup-request') {
-        console.warn("Login popup was closed before completion.");
-      } else if (error && error.code === 'auth/internal-error') {
-        const msg = isRtl 
-          ? 'خطأ داخلي في تسجيل الدخول. يرجى تجربة فتح المتصفح في علامة تبويب جديدة أو التأكد من السماح بملفات تعريف الارتباط للطرف الثالث.' 
-          : 'Internal Login Error. Please try opening the app in a new tab or ensure third-party cookies are enabled.';
-        alert(msg);
-        console.error("Internal Auth Error Details:", error);
+         console.warn("Login popup was closed before completion.");
+      } else if (error && (
+        error.code === 'auth/popup-blocked' || 
+        error.message?.includes('popup-blocked') || 
+        error.code === 'auth/cancelled-popup-interactive' ||
+        error.code === 'auth/internal-error'
+      )) {
+        console.log("Popup was blocked or restricted by browser settings. Using redirect method...");
+        try {
+          await signInWithRedirect(auth, provider);
+        } catch (redirectError: any) {
+          console.error("Redirect login error:", redirectError);
+          const msg = isRtl
+            ? 'تم حظر النافذة المنبثقة. يرجى تفعيل ملفات تعريف الارتباط للطرف الثالث أو السماح بالمنبثقات.'
+            : 'Popup blocked. Please enable third-party cookies or allow popups in browser settings.';
+          alert(msg);
+        }
       } else {
-        console.error("Login Error:", error);
-        alert(isRtl ? `خطأ في تسجيل الدخول: ${error.message}` : `Login Error: ${error.message}`);
+        // As a general safety fallback, try redirecting for any other error
+        try {
+          console.log("General error occurred, falling back to redirect...");
+          await signInWithRedirect(auth, provider);
+        } catch (redirectError: any) {
+          console.error("General redirect login error:", redirectError);
+          alert(isRtl ? `خطأ في تسجيل الدخول: ${error.message}` : `Login Error: ${error.message}`);
+        }
       }
     } finally {
       setIsLoggingIn(false);

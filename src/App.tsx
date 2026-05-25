@@ -1897,16 +1897,19 @@ const NavItem = ({ icon, label, active = false, onClick }: { icon: React.ReactNo
   </button>
 );
 
-const SocialIcon = ({ icon, href, color }: { icon: React.ReactNode, href?: string, color: string }) => (
-  <a 
-    href={href || "#"} 
-    target="_blank" 
-    rel="noopener noreferrer"
-    className={cn("p-2.5 rounded-xl bg-white/5 border border-white/5 transition-all hover:bg-white/10 hover:scale-110 text-slate-400", color)}
-  >
-    {icon}
-  </a>
-);
+const SocialIcon = ({ icon, href, color }: { icon: React.ReactNode, href?: string, color: string }) => {
+  if (!href) return null;
+  return (
+    <a 
+      href={href} 
+      target="_blank" 
+      rel="noopener noreferrer"
+      className={cn("p-2.5 rounded-xl bg-white/5 border border-white/5 transition-all hover:bg-white/10 hover:scale-110 text-slate-400", color)}
+    >
+      {icon}
+    </a>
+  );
+};
 
 const StatBox = ({ label, value, color }: { label: string, value: string, color: string }) => (
   <div className="bg-white/5 border border-white/5 p-4 md:p-6 rounded-2xl flex flex-col justify-center">

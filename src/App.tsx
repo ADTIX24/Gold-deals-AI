@@ -5,7 +5,7 @@ import {
   LineChart, Cpu, Settings, Globe, LogIn, ChevronRight, 
   Activity, Zap, Instagram, Youtube, Twitter, MessageCircle, 
   Ghost, User, Layout, Users, Wallet, LogOut, Info, ArrowUpRight,
-  PieChart, Shield, Newspaper, Facebook
+  PieChart, Shield, Newspaper, Facebook, Smartphone
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from './lib/utils';
@@ -58,8 +58,8 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
     operationType,
     path
   };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  console.error('Firestore Error: ', errInfo);
+  // Do not throw to prevent crashing the entire application / showing blank screens.
 }
 
 
@@ -228,7 +228,8 @@ const AdminDashboard = () => {
     supportMessage: '',
     supportUrl2: '',
     showSupport2: false,
-    marketSentiment: 'safe'
+    marketSentiment: 'safe',
+    downloadButtons: []
   });
 
   useEffect(() => {
@@ -669,6 +670,85 @@ const AdminDashboard = () => {
                     <SettingInput label="Snapchat" value={siteConfig.snapchatUrl} onChange={(v) => updateSetting('snapchatUrl', v)} />
                     <SettingInput label="TikTok" value={siteConfig.tiktokUrl} onChange={(v) => updateSetting('tiktokUrl', v)} />
                     <SettingInput label="YouTube" value={siteConfig.youtubeUrl} onChange={(v) => updateSetting('youtubeUrl', v)} />
+                  </div>
+                </div>
+
+                <div className="p-4 bg-slate-900/40 rounded-2xl border border-white/5 space-y-4 font-sans">
+                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block">{isRtl ? 'أزرار تحميل التطبيق' : 'App Download Buttons'}</label>
+                  <div className="space-y-4">
+                    {(siteConfig.downloadButtons || []).map((btn: any, index: number) => (
+                      <div key={index} className="space-y-3 bg-slate-950/40 p-3 rounded-xl border border-white/5 relative group">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">{isRtl ? 'اسم الزر (عربي)' : 'Label (AR)'}</label>
+                            <input 
+                              type="text"
+                              defaultValue={btn.labelAr || ''}
+                              placeholder={isRtl ? 'مثال: تحميل للاندرويد' : 'e.g. Download for Android'}
+                              onBlur={(e) => {
+                                const newBtns = [...(siteConfig.downloadButtons || [])];
+                                newBtns[index].labelAr = e.target.value;
+                                updateSetting('downloadButtons', newBtns);
+                              }}
+                              className="w-full bg-slate-900 border border-white/5 rounded-lg px-2.5 py-1.5 text-xs focus:border-amber-400 outline-none text-white font-sans"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">{isRtl ? 'اسم الزر (إنجليزي)' : 'Label (EN)'}</label>
+                            <input 
+                              type="text"
+                              defaultValue={btn.labelEn || ''}
+                              placeholder={isRtl ? 'مثال: Download Android' : 'e.g. Download for Android'}
+                              onBlur={(e) => {
+                                const newBtns = [...(siteConfig.downloadButtons || [])];
+                                newBtns[index].labelEn = e.target.value;
+                                updateSetting('downloadButtons', newBtns);
+                              }}
+                              className="w-full bg-slate-900 border border-white/5 rounded-lg px-2.5 py-1.5 text-xs focus:border-amber-400 outline-none text-white font-sans"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">{isRtl ? 'رابط صفحة التحميل' : 'Download Link / URL'}</label>
+                          <input 
+                            type="text"
+                            defaultValue={btn.url || ''}
+                            placeholder="https://..."
+                            onBlur={(e) => {
+                              const newBtns = [...(siteConfig.downloadButtons || [])];
+                              newBtns[index].url = e.target.value;
+                              updateSetting('downloadButtons', newBtns);
+                            }}
+                            className="w-full bg-slate-900 border border-white/5 rounded-lg px-2.5 py-1.5 text-xs focus:border-amber-400 outline-none text-white font-mono"
+                          />
+                        </div>
+
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            const newBtns = (siteConfig.downloadButtons || []).filter((_: any, i: number) => i !== index);
+                            updateSetting('downloadButtons', newBtns);
+                          }}
+                          className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                        >
+                          <Trash2 size={10} className="text-white" />
+                        </button>
+                      </div>
+                    ))}
+
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        const newBtns = [...(siteConfig.downloadButtons || []), { labelAr: 'تحميل التطبيق', labelEn: 'Download App', url: '' }];
+                        setSiteConfig({ ...siteConfig, downloadButtons: newBtns });
+                        updateSetting('downloadButtons', newBtns);
+                      }}
+                      className="w-full py-2 border border-dashed border-white/10 hover:border-amber-400/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-amber-400 transition-all flex items-center justify-center gap-1.5"
+                    >
+                      <Plus size={12} />
+                      <span>{isRtl ? 'إضافة زر تحميل جديد' : 'Add Download Button'}</span>
+                    </button>
                   </div>
                 </div>
                 
@@ -1138,10 +1218,9 @@ const AIAnalyst = ({ userProfile, isRtl }: any) => {
       setIsCooldownActive(true);
     } catch (err: any) {
       console.error(err);
-      const errMsg = err?.message || err?.toString() || '';
       setError(isRtl 
-        ? `حدث خطأ أثناء التحليل: ${errMsg}. يرجى التأكد من إضافة مفتاح (GEMINI_API_KEY) في إعدادات المنصة (Vercel).`
-        : `Error during analysis: ${errMsg}. Please make sure GEMINI_API_KEY is defined in your platform environment variables.`);
+        ? 'حدث خطأ أثناء رصد إشارات الذهب، يرجى المحاولة مرة أخرى لاحقاً.'
+        : 'An error occurred during analysis. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -1473,7 +1552,15 @@ export default function App() {
       const allSignals = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       const recentSignals = allSignals.filter((s: any) => {
         if (!s.createdAt) return true;
-        return s.createdAt.toDate() > yesterday;
+        try {
+          const date = typeof s.createdAt.toDate === 'function'
+            ? s.createdAt.toDate()
+            : new Date(s.createdAt);
+          return date > yesterday;
+        } catch (e) {
+          console.error("Failed to parse signal createdAt date:", s, e);
+          return true;
+        }
       });
       setLiveSignals(recentSignals);
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'signals'));
@@ -1883,6 +1970,28 @@ export default function App() {
             <SocialIcon icon={<Youtube size={20} />} href={siteSettings.youtubeUrl} color="hover:text-red-500" />
             <SocialIcon icon={<Ghost size={20} />} href={siteSettings.snapchatUrl} color="hover:text-yellow-300" />
           </div>
+
+          {/* App Download Buttons */}
+          {(siteSettings.downloadButtons || []).length > 0 && (
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              {siteSettings.downloadButtons.map((btn: any, idx: number) => {
+                if (!btn.url) return null;
+                return (
+                  <a
+                    key={idx}
+                    href={btn.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all hover:scale-105 active:scale-95 shadow-lg shadow-amber-500/10 hover:shadow-amber-500/20"
+                    id={`download-app-btn-${idx}`}
+                  >
+                    <Smartphone size={15} />
+                    <span>{isRtl ? (btn.labelAr || 'تحميل التطبيق') : (btn.labelEn || 'Download App')}</span>
+                  </a>
+                );
+              })}
+            </div>
+          )}
 
           {/* Bottom: Copyright */}
           <div className="flex flex-col items-center gap-2">
